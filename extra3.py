@@ -9,7 +9,7 @@ no_feature = np.zeros((11,25))
 
 # smoothing constant
 # try it
-k = 7
+k = 3.051
 
 
 def train_yes_no(filePath, feature):
@@ -93,10 +93,12 @@ def test_yes_no(filePath):
                 temp_no =  np.array([ no_likelihoods[index] for index in temp ]).diagonal()
                 no_prob = log_p_no +  sum( np.log(temp_no) )
 
-
+                print (yes_prob,no_prob)
                 output = np.append(output, 1 ) if yes_prob > no_prob else np.append(output, 0 )
 
                 temp = np.zeros(25,dtype=int)
+
+                break
 
             line_num += 1
     return output
@@ -107,4 +109,3 @@ print(sum(output)/len(output))
 
 output = test_yes_no("./yesno/no_test.txt")
 print(1-sum(output)/len(output))
-

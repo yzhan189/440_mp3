@@ -106,9 +106,9 @@ def test_yes_no(filePath):
 
             line_num += 1
     return output
-
-output = test_yes_no("./yesno/yes_test.txt")
-print(sum(output)/len(output))
-
-output = test_yes_no("./yesno/no_test.txt")
-print(1-sum(output)/len(output))
+#
+# output = test_yes_no("./yesno/yes_test.txt")
+# print(sum(output)/len(output))
+#
+# output = test_yes_no("./yesno/no_test.txt")
+# print(1-sum(output)/len(output))
