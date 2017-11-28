@@ -106,9 +106,19 @@ def test_yes_no(filePath):
 
             line_num += 1
     return output
-#
-# output = test_yes_no("./yesno/yes_test.txt")
-# print(sum(output)/len(output))
-#
-# output = test_yes_no("./yesno/no_test.txt")
-# print(1-sum(output)/len(output))
+
+
+
+
+output1 = test_yes_no("./yesno/yes_test.txt")
+yesyes = sum(output1)/len(output1)
+
+output2 = test_yes_no("./yesno/no_test.txt")
+nono = (1-sum(output2)/len(output2))
+
+print("Accuracy:")
+print( (sum(output1)/len(output1) + (1-sum(output2)/len(output2)))/2 )
+
+print('\n             predicted yes     predicted no')
+print('actual yes   '+str(yesyes)+'             '+str(1-yesyes))
+print('actual no    '+str(1-nono)+'             '+str(nono))

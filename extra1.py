@@ -1,7 +1,7 @@
 import numpy as np
 from math import *
 import os
-from seg import *
+import seg
 
 # [no, yes]
 high = np.zeros((2,25,10))
@@ -12,7 +12,7 @@ total = np.zeros(2)
 
 # smoothing constant
 # try it
-k = 3
+k = 5
 
 
 def train_yes_no( ):
@@ -36,8 +36,8 @@ def train_yes_no( ):
             temp = np.zeros((8,25,10))
 
             # try plausible trimming the head and interval numbers
-            for trim_head in range(22,25):
-                for interval in [1,2,3]:
+            for trim_head in range(20,25):
+                for interval in [0,1,2,3]:
 
                     line_num = 0
 
@@ -59,26 +59,34 @@ def train_yes_no( ):
                         line_num += 1
 
                     curr_result = 0
-                    for i in range(8):
-                        temp_yes = temp[i] * yes_high_likelihoods + (1 - temp[i]) * yes_low_likelihoods
-                        yes_prob = log_p_yes + sum(sum(np.log(temp_yes)))
 
-                        temp_no = temp[i] * no_high_likelihoods + (1 - temp[i]) * no_low_likelihoods
-                        no_prob = log_p_no + sum(sum(np.log(temp_no)))
+                    for i in range(8):
+                        temp_yes = temp[i] * seg.YES_H + (1 - temp[i]) * seg.YES_L
+                        yes_prob = seg.LOG_YES + sum(sum(np.log(temp_yes)))
+
+                        temp_no = temp[i] * seg.NO_H + (1 - temp[i]) * seg.NO_L
+                        no_prob = seg.LOG_NO + sum(sum(np.log(temp_no)))
 
                         if spec_labels[i] is 0:
                             curr_result += (no_prob-yes_prob)
                         else :
                             curr_result += (yes_prob-no_prob)
 
+                        # if spec_labels[i] is 0 and (no_prob>yes_prob):
+                        #     curr_result += 1
+                        # elif spec_labels[i] is 1 and (no_prob<yes_prob):
+                        #     curr_result += 1
+
+
                     if (curr_result > max):
                         max = curr_result
                         temp_max = temp
 
+
+
             # by this point you should get best segment
             # do count
             for i in range(8):
-
                 high[spec_labels[i]] = high[spec_labels[i]]  + sum(temp_max)
                 low[spec_labels[i]]  = low[spec_labels[i]]  + (sum(1-temp_max))
 
@@ -149,8 +157,15 @@ def test_yes_no(path):
 
 
 
-output = test_yes_no("./txt_yesno/yes_test")
-print(sum(output)/len(output))
+output1 = test_yes_no("./txt_yesno/yes_test")
+yesyes = sum(output1)/len(output1)
 
-output = test_yes_no("./txt_yesno/no_test")
-print(1-sum(output)/len(output))
+output2 = test_yes_no("./txt_yesno/no_test")
+nono = (1-sum(output2)/len(output2))
+
+print("Accuracy:")
+print( (sum(output1)/len(output1) + (1-sum(output2)/len(output2)))/2 )
+
+print('\n             predicted yes     predicted no')
+print('actual yes   '+str(yesyes)+'             '+str(1-yesyes))
+print('actual no    '+str(1-nono)+'             '+str(nono))

@@ -101,9 +101,24 @@ with open("./data22/testing_labels.txt") as label_file:
     test_labels = [int(n) for n in label_file.read().splitlines()]
 
 
+
+confusion = np.zeros((5,5))
+totals = np.zeros(5)
+
 count = 0
 for i in range(len(test_labels)):
-    if test_labels[i] == output[i]:
-        count+=1
+    # count total
+    totals[test_labels[i]-1] +=1
 
+    confusion[int(test_labels[i])-1,int(output[i])-1] += 1
+
+    if test_labels[i] == output[i]:
+        count += 1
+
+
+
+print("Accuracy:")
 print(count/len(test_labels))
+
+print(confusion/totals)
+
