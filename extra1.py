@@ -1,7 +1,6 @@
 import numpy as np
 from math import *
 import os
-import seg
 
 # [no, yes]
 high = np.zeros((2,25,10))
@@ -31,64 +30,59 @@ def train_yes_no( ):
         with open (filePath) as train_file :
 
             lines = train_file.read().splitlines()
-            max = -np.inf
-            temp_max = np.zeros((8,25,10))
+
+            heads = np.zeros(8,dtype=int)
+
+
+            spec_num = 0
+            while (spec_num<8):
+                starts = np.zeros(25, dtype=int)
+                i = 0
+
+                for line in lines:
+                    adding = 0
+
+                    if spec_num ==0 :
+                        index = line.find('   ')
+                    else:
+                        index = line[(heads[spec_num-1]+10):].find("   ")
+                        adding = (heads[spec_num-1]+10)
+
+                    if index == -1:
+                        starts[i] = 200
+                    else:
+                        starts[i] = index+adding
+
+                    i +=1
+
+
+                heads[spec_num] = np.sort(starts)[1]
+                spec_num +=1
+            if heads[7] ==200:
+                heads[7] = heads[6]
+
+            # extract
             temp = np.zeros((8,25,10))
 
-            # try plausible trimming the head and interval numbers
-            for trim_head in range(20,25):
-                for interval in [0,1,2,3]:
+            for spec_num in range(8):
+                head = heads[spec_num]
+                for row in range(25):
+                    line = lines[row][head:(head+10)]
 
-                    line_num = 0
-
-                    for line in lines:
-                        chunks = [line[ trim_head+i*(10+interval):trim_head+i*(10+interval)+10 ] for i in range(8)]
-
-                        spec_num = 0
-
-                        for chunk in chunks:
-                            col = 0
-                            for c in chunk:
-                                if c is ' ':
-                                    temp[spec_num,line_num, col] = 1
-                                else :
-                                    temp[spec_num,line_num, col] = 0
-                                col += 1
-                            spec_num += 1
-
-                        line_num += 1
-
-                    curr_result = 0
-
-                    for i in range(8):
-                        temp_yes = temp[i] * seg.YES_H + (1 - temp[i]) * seg.YES_L
-                        yes_prob = seg.LOG_YES + sum(sum(np.log(temp_yes)))
-
-                        temp_no = temp[i] * seg.NO_H + (1 - temp[i]) * seg.NO_L
-                        no_prob = seg.LOG_NO + sum(sum(np.log(temp_no)))
-
-                        if spec_labels[i] is 0:
-                            curr_result += (no_prob-yes_prob)
-                        else :
-                            curr_result += (yes_prob-no_prob)
-
-                        # if spec_labels[i] is 0 and (no_prob>yes_prob):
-                        #     curr_result += 1
-                        # elif spec_labels[i] is 1 and (no_prob<yes_prob):
-                        #     curr_result += 1
-
-
-                    if (curr_result > max):
-                        max = curr_result
-                        temp_max = temp
+                    for col in range(10):
+                        if line[col] == ' ':
+                            temp[spec_num,row,col] = 1
+                        else:
+                            temp[spec_num, row, col] = 0
 
 
 
-            # by this point you should get best segment
-            # do count
+
             for i in range(8):
-                high[spec_labels[i]] = high[spec_labels[i]]  + sum(temp_max)
-                low[spec_labels[i]]  = low[spec_labels[i]]  + (sum(1-temp_max))
+                high[spec_labels[i]] = high[spec_labels[i]] + temp[i]
+                low[spec_labels[i]] = low[spec_labels[i]] + ((1 - temp[i]))
+
+
 
 
 # training
@@ -141,26 +135,30 @@ def test_yes_no(path):
                         temp[line_num, col] = 0
                     col += 1
 
-
-                temp_yes = temp * yes_high_likelihoods + (1-temp)*yes_low_likelihoods
-                yes_prob = log_p_yes +  sum(sum( np.log(temp_yes) ))
-
-                temp_no = temp * no_high_likelihoods + (1-temp)*no_low_likelihoods
-                no_prob = log_p_no +  sum(sum( np.log(temp_no) ))
-
-
-                output = np.append(output, 1 ) if yes_prob > no_prob else np.append(output, 0 )
-
                 line_num += 1
+
+
+            temp_yes = temp * yes_high_likelihoods + (1-temp)*yes_low_likelihoods
+            yes_prob = log_p_yes +  sum(sum( np.log(temp_yes) ))
+
+            temp_no = temp * no_high_likelihoods + (1-temp)*no_low_likelihoods
+            no_prob = log_p_no +  sum(sum( np.log(temp_no) ))
+
+
+            output = np.append(output, 1 ) if yes_prob > no_prob else np.append(output, 0 )
+
+
 
     return output
 
 
 
 output1 = test_yes_no("./txt_yesno/yes_test")
+print(len(output1))
 yesyes = sum(output1)/len(output1)
 
 output2 = test_yes_no("./txt_yesno/no_test")
+print(len(output2))
 nono = (1-sum(output2)/len(output2))
 
 print("Accuracy:")
